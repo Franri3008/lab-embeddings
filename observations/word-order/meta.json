@@ -1,0 +1,7 @@
+{
+  "title": "Word order",
+  "topic": "Composition",
+  "color": "#7d4fd1",
+  "order": 8,
+  "words": ["dog bites man", "man bites dog", "the cat chased the dog", "the dog chased the cat"]
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+</head>
+<body>
+  <main id="app">
+    <section id="controls">
+      <div id="add-row">
+        <input id="word-input" type="text" placeholder="word or phrase" autocomplete="off" />
+        <button id="add-btn" class="btn btn-add">Add</button>
+      </div>
+
+      <table id="word-table"><tbody id="word-rows"></tbody></table>
+
+      <div id="options">
+        <div class="opt-group">
+          <div class="opt-title">Dim. reduction</div>
+          <div class="toggle-group" id="method-toggle">
+            <button class="btn btn-method active" data-method="umap">UMAP</button>
+            <button class="btn btn-method" data-method="pca">PCA</button>
+          </div>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="normalize-check" />
+          <span>normalize</span>
+        </label>
+      </div>
+
+      <div class="opt-group" id="model-group">
+        <div class="opt-title">Embedding model</div>
+        <select id="model-select"></select>
+      </div>
+
+      <button id="embed-btn" class="btn btn-embed">Embed</button>
+      <div id="cost"><span class="cost-label">Total cost:</span> <span id="cost-value">$0.00</span></div>
+      <div id="status"></div>
+    </section>
+
+    <section id="workspace" class="obs-hidden">
+      <div id="view">
+        <div id="tabs">
+          <button class="tab" data-view="graph" disabled>Semantic Space</button>
+          <button class="tab" data-view="heatmap" disabled>Cosine Similarity</button>
+        </div>
+        <div id="dim-bar" class="hidden">
+          <div class="toggle-group" id="dim-toggle">
+            <button class="btn btn-dim active" data-dim="2">2D</button>
+            <button class="btn btn-dim" data-dim="3">3D</button>
+            <button class="btn btn-dim" data-dim="4">4D</button>
+          </div>
+        </div>
+        <div id="views">
+          <div id="graph" class="view-pane"></div>
+          <div id="heatmap" class="view-pane hidden"></div>
+          <div id="empty-hint">Use the system on the left to embed text.</div>
+        </div>
+      </div>
+      <button id="obs-toggle" title="show / hide observations">◀</button>
+      <aside id="observations">
+        <div class="obs-header">Observations</div>
+        <div id="obs-list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="overlay" hidden>
+    <div class="overlay-box">
+      <div id="overlay-text">Embedding…</div>
+      <div class="loadbar"><div class="loadbar-fill"></div></div>
+    </div>
+  </div>
+
+  <dialog id="funds-modal">
+    <p id="funds-msg">No funds left for embedding, I will add more soon!</p>
+    <span class="donate-btn" aria-disabled="true">Consider donating</span>
+    <button id="funds-close" class="btn">Close</button>
+  </dialog>
+
+  <a id="gh-link" href="https://github.com/Franri3008" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
+    <svg viewBox="0 0 16 16" width="28" height="28" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+    </svg>
+  </a>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

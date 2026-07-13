@@ -1,0 +1,7 @@
+{
+  "title": "Repetition",
+  "topic": "Composition",
+  "color": "#6b3fc0",
+  "order": 7,
+  "words": ["cat", "dog", "cat,dog", "dog,cat", "cat,cat,dog", "dog,dog,cat"]
+}

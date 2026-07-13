@@ -1,0 +1,6 @@
+flask
+requests
+numpy
+umap-learn
+scikit-learn
+gunicorn

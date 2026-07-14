@@ -17,23 +17,43 @@
 
       <table id="word-table"><tbody id="word-rows"></tbody></table>
 
-      <div id="options">
-        <div class="opt-group">
-          <div class="opt-title">Dim. reduction</div>
-          <div class="toggle-group" id="method-toggle">
-            <button class="btn btn-method active" data-method="umap">UMAP</button>
-            <button class="btn btn-method" data-method="pca">PCA</button>
+      <div id="advanced-options">
+        <div id="advanced-panel" aria-hidden="true">
+          <div class="advanced-panel-content">
+            <div id="options">
+              <div class="opt-group">
+                <div class="opt-title">Dim. reduction</div>
+                <div class="toggle-group" id="method-toggle">
+                  <button class="btn btn-method active" data-method="pca">PCA</button>
+                  <button class="btn btn-method" data-method="umap" disabled>UMAP</button>
+                </div>
+              </div>
+              <label class="check">
+                <input type="checkbox" id="normalize-check" />
+                <span>normalize</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" id="labels-check" checked />
+                <span>show graph labels</span>
+              </label>
+            </div>
+
+            <div class="opt-group" id="model-group">
+              <div class="opt-title">Embedding model</div>
+              <select id="model-select"></select>
+            </div>
           </div>
         </div>
-        <label class="check">
-          <input type="checkbox" id="normalize-check" />
-          <span>normalize</span>
-        </label>
-      </div>
-
-      <div class="opt-group" id="model-group">
-        <div class="opt-title">Embedding model</div>
-        <select id="model-select"></select>
+        <button
+          id="advanced-toggle"
+          class="btn btn-advanced"
+          type="button"
+          aria-controls="advanced-panel"
+          aria-expanded="false"
+        >
+          <span id="advanced-toggle-label">Advanced options</span>
+          <span class="advanced-chevron" aria-hidden="true">▲</span>
+        </button>
       </div>
 
       <button id="embed-btn" class="btn btn-embed">Embed</button>
@@ -43,24 +63,33 @@
 
     <section id="workspace" class="obs-hidden">
       <div id="view">
-        <div id="tabs">
-          <button class="tab" data-view="graph" disabled>Semantic Space</button>
-          <button class="tab" data-view="heatmap" disabled>Cosine Similarity</button>
-        </div>
-        <div id="dim-bar" class="hidden">
-          <div class="toggle-group" id="dim-toggle">
-            <button class="btn btn-dim active" data-dim="2">2D</button>
-            <button class="btn btn-dim" data-dim="3">3D</button>
-            <button class="btn btn-dim" data-dim="4">4D</button>
+        <div id="plot-shell">
+          <div id="tabs">
+            <button class="tab" data-view="graph" disabled>Semantic Space</button>
+            <button class="tab" data-view="heatmap" disabled>Cosine Similarity</button>
+          </div>
+          <div id="dim-bar" class="hidden">
+            <div class="toggle-group" id="dim-toggle">
+              <button class="btn btn-dim" data-dim="2">2D</button>
+              <button class="btn btn-dim active" data-dim="3">3D</button>
+              <button class="btn btn-dim" data-dim="4">4D</button>
+            </div>
+          </div>
+          <div id="views">
+            <div id="graph" class="view-pane"></div>
+            <div id="heatmap" class="view-pane hidden"></div>
+            <div id="empty-hint">Use the system on the left to embed text.</div>
           </div>
         </div>
-        <div id="views">
-          <div id="graph" class="view-pane"></div>
-          <div id="heatmap" class="view-pane hidden"></div>
-          <div id="empty-hint">Use the system on the left to embed text.</div>
-        </div>
       </div>
-      <button id="obs-toggle" title="show / hide observations">◀</button>
+      <button
+        id="obs-toggle"
+        type="button"
+        aria-controls="observations"
+        aria-expanded="false"
+        aria-label="Show observations"
+        title="Show observations"
+      >◀</button>
       <aside id="observations">
         <div class="obs-header">Observations</div>
         <div id="obs-list"></div>

@@ -1,9 +1,10 @@
 const state = {
   userWords: [],
   randomWords: [],
-  dims: 2,
-  method: "umap",
+  dims: 3,
+  method: "pca",
   normalize: false,
+  showLabels: true,
   model: null,
   activeView: "graph",
 };
@@ -23,9 +24,14 @@ const $rows = document.getElementById("word-rows");
 const $embedBtn = document.getElementById("embed-btn");
 const $status = document.getElementById("status");
 const $normalizeCheck = document.getElementById("normalize-check");
+const $labelsCheck = document.getElementById("labels-check");
 const $dimToggle = document.getElementById("dim-toggle");
 const $methodToggle = document.getElementById("method-toggle");
 const $modelSelect = document.getElementById("model-select");
+const $advancedOptions = document.getElementById("advanced-options");
+const $advancedPanel = document.getElementById("advanced-panel");
+const $advancedToggle = document.getElementById("advanced-toggle");
+const $advancedToggleLabel = document.getElementById("advanced-toggle-label");
 const $overlay = document.getElementById("overlay");
 const $overlayText = document.getElementById("overlay-text");
 const $loadFill = document.querySelector(".loadbar-fill");
@@ -52,6 +58,37 @@ const $dimBar = document.getElementById("dim-bar");
 
 function allWords() {
   return [...state.userWords, ...state.randomWords];
+}
+
+function setMethod(method) {
+  state.method = method;
+  for (const button of $methodToggle.querySelectorAll(".btn-method")) {
+    button.classList.toggle("active", button.dataset.method === method);
+  }
+}
+
+function syncMethodAvailability() {
+  const wordCount = allWords().length;
+  const minimum = state.dims + 2;
+  const available = wordCount >= minimum;
+  const umapButton = $methodToggle.querySelector('[data-method="umap"]');
+
+  umapButton.disabled = !available;
+  umapButton.title = available
+    ? `Use UMAP for ${state.dims}D reduction`
+    : `UMAP requires at least ${minimum} words for ${state.dims}D`;
+  umapButton.setAttribute("aria-label", available
+    ? "Use UMAP"
+    : `UMAP unavailable: requires at least ${minimum} words for ${state.dims}D`);
+
+  if (!available && state.method === "umap") setMethod("pca");
+}
+
+function setAdvancedOptionsOpen(isOpen) {
+  $advancedOptions.classList.toggle("open", isOpen);
+  $advancedPanel.setAttribute("aria-hidden", String(!isOpen));
+  $advancedToggle.setAttribute("aria-expanded", String(isOpen));
+  $advancedToggleLabel.textContent = isOpen ? "Hide advanced options" : "Advanced options";
 }
 
 function addWord() {
@@ -153,6 +190,7 @@ function renderRows() {
   addTr.appendChild(cell);
   $rows.appendChild(addTr);
 
+  syncMethodAvailability();
   $embedBtn.disabled = allWords().length === 0;
 }
 
@@ -299,12 +337,12 @@ function plot(data) {
     }
 
     const trace = {
-      mode: "markers+text",
+      mode: state.showLabels ? "markers+text" : "markers",
       type: use3d ? "scatter3d" : "scattergl",
       name: group,
       text: pts.map((p) => p.label),
       textposition: "top center",
-      hoverinfo: "skip",
+      hoverinfo: state.showLabels ? "skip" : "text",
       marker,
       textfont: { color: COLORS[group] },
       x: pts.map((p) => p.coords[0]),
@@ -397,6 +435,13 @@ $embedBtn.addEventListener("click", runEmbed);
 $normalizeCheck.addEventListener("change", () => {
   state.normalize = $normalizeCheck.checked;
 });
+$labelsCheck.addEventListener("change", () => {
+  state.showLabels = $labelsCheck.checked;
+  if (lastResult) plot(lastResult);
+});
+$advancedToggle.addEventListener("click", () => {
+  setAdvancedOptionsOpen(!$advancedOptions.classList.contains("open"));
+});
 $dimToggle.addEventListener("click", (e) => {
   const btn = e.target.closest(".btn-dim");
   if (!btn) return;
@@ -404,15 +449,13 @@ $dimToggle.addEventListener("click", (e) => {
   for (const b of $dimToggle.querySelectorAll(".btn-dim")) {
     b.classList.toggle("active", b === btn);
   }
+  syncMethodAvailability();
   if (lastResult) runEmbed({ silent: lastResult.model === state.model });
 });
 $methodToggle.addEventListener("click", (e) => {
   const btn = e.target.closest(".btn-method");
-  if (!btn) return;
-  state.method = btn.dataset.method;
-  for (const b of $methodToggle.querySelectorAll(".btn-method")) {
-    b.classList.toggle("active", b === btn);
-  }
+  if (!btn || btn.disabled) return;
+  setMethod(btn.dataset.method);
 });
 
 async function loadModels() {
@@ -467,19 +510,33 @@ $tabs.addEventListener("click", (e) => {
 });
 
 const DRAG_THRESHOLD = 3;
+const mobileLayout = window.matchMedia("(max-width: 767px)");
 let drag = null;
+let suppressObsClick = false;
 
-function setObsGlyph() {
-  $obsToggle.textContent = $workspace.classList.contains("obs-hidden") ? "◀" : "▶";
+function setObsTogglePresentation() {
+  const isOpen = !$workspace.classList.contains("obs-hidden");
+  const label = isOpen ? "Hide observations" : "Show observations";
+  $obsToggle.textContent = mobileLayout.matches ? label : (isOpen ? "▶" : "◀");
+  $obsToggle.setAttribute("aria-expanded", String(isOpen));
+  $obsToggle.setAttribute("aria-label", label);
+  $obsToggle.title = mobileLayout.matches || !isOpen ? label : "Hide or resize observations";
+}
+
+function toggleObservations() {
+  $workspace.style.removeProperty("--obs-width");
+  $workspace.classList.toggle("obs-hidden");
+  setObsTogglePresentation();
 }
 
 $obsToggle.addEventListener("mousedown", (e) => {
-  drag = { startX: e.clientX, moved: false, wasHidden: $workspace.classList.contains("obs-hidden") };
+  if (mobileLayout.matches || $workspace.classList.contains("obs-hidden")) return;
+  drag = { startX: e.clientX, moved: false };
   e.preventDefault();
 });
 
 window.addEventListener("mousemove", (e) => {
-  if (!drag || drag.wasHidden) return;
+  if (!drag) return;
   if (!drag.moved && Math.abs(e.clientX - drag.startX) > DRAG_THRESHOLD) {
     drag.moved = true;
     $workspace.classList.add("no-transition");
@@ -494,15 +551,33 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", () => {
   if (!drag) return;
-  if (!drag.moved) {
-    $workspace.style.removeProperty("--obs-width");
-    $workspace.classList.toggle("obs-hidden");
-  } else {
+  if (drag.moved) {
     $workspace.classList.remove("no-transition");
+    suppressObsClick = true;
+    window.setTimeout(() => {
+      suppressObsClick = false;
+    }, 0);
   }
-  setObsGlyph();
   drag = null;
 });
+
+$obsToggle.addEventListener("click", () => {
+  if (suppressObsClick) {
+    suppressObsClick = false;
+    return;
+  }
+  toggleObservations();
+});
+
+mobileLayout.addEventListener("change", () => {
+  drag = null;
+  suppressObsClick = false;
+  $workspace.classList.remove("no-transition");
+  $workspace.style.removeProperty("--obs-width");
+  setObsTogglePresentation();
+});
+
+setObsTogglePresentation();
 
 async function loadObservations() {
   try {

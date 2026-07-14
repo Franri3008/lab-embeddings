@@ -83,8 +83,8 @@ def embed_route():
 
     raw_words = body.get("words", [])
     raw_groups = body.get("groups", [])
-    dimensions = body.get("dimensions", 2)
-    method = str(body.get("method", "umap")).lower()
+    dimensions = body.get("dimensions", 3)
+    method = str(body.get("method", "pca")).lower()
     normalize = bool(body.get("normalize", False))
     model = (str(body.get("model") or "")).strip() or None
 

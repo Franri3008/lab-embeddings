@@ -48,7 +48,10 @@ function maybeShowFundsModal(msg) {
 const $costValue = document.getElementById("cost-value");
 const $workspace = document.getElementById("workspace");
 const $obsToggle = document.getElementById("obs-toggle");
+const $obsToggleArrow = $obsToggle.querySelector(".obs-toggle-arrow");
+const $obsToggleLabel = $obsToggle.querySelector(".obs-toggle-label");
 const $observations = document.getElementById("observations");
+const $obsResizeHandle = document.getElementById("obs-resize-handle");
 const $obsList = document.getElementById("obs-list");
 const $tabs = document.getElementById("tabs");
 const $graph = document.getElementById("graph");
@@ -512,15 +515,15 @@ $tabs.addEventListener("click", (e) => {
 const DRAG_THRESHOLD = 3;
 const mobileLayout = window.matchMedia("(max-width: 767px)");
 let drag = null;
-let suppressObsClick = false;
 
 function setObsTogglePresentation() {
   const isOpen = !$workspace.classList.contains("obs-hidden");
   const label = isOpen ? "Hide observations" : "Show observations";
-  $obsToggle.textContent = mobileLayout.matches ? label : (isOpen ? "▶" : "◀");
+  $obsToggleArrow.textContent = isOpen ? "▶" : "◀";
+  $obsToggleLabel.textContent = mobileLayout.matches ? label : "Observations";
   $obsToggle.setAttribute("aria-expanded", String(isOpen));
   $obsToggle.setAttribute("aria-label", label);
-  $obsToggle.title = mobileLayout.matches || !isOpen ? label : "Hide or resize observations";
+  $obsToggle.title = label;
 }
 
 function toggleObservations() {
@@ -529,9 +532,13 @@ function toggleObservations() {
   setObsTogglePresentation();
 }
 
-$obsToggle.addEventListener("mousedown", (e) => {
+$obsResizeHandle.addEventListener("mousedown", (e) => {
   if (mobileLayout.matches || $workspace.classList.contains("obs-hidden")) return;
-  drag = { startX: e.clientX, moved: false };
+  drag = {
+    startX: e.clientX,
+    right: $observations.getBoundingClientRect().right,
+    moved: false,
+  };
   e.preventDefault();
 });
 
@@ -543,7 +550,7 @@ window.addEventListener("mousemove", (e) => {
   }
   if (drag.moved) {
     const rect = $workspace.getBoundingClientRect();
-    let width = rect.right - e.clientX - 11;
+    let width = drag.right - e.clientX;
     width = Math.max(0, Math.min(width, rect.width - 60));
     $workspace.style.setProperty("--obs-width", width + "px");
   }
@@ -553,25 +560,16 @@ window.addEventListener("mouseup", () => {
   if (!drag) return;
   if (drag.moved) {
     $workspace.classList.remove("no-transition");
-    suppressObsClick = true;
-    window.setTimeout(() => {
-      suppressObsClick = false;
-    }, 0);
   }
   drag = null;
 });
 
 $obsToggle.addEventListener("click", () => {
-  if (suppressObsClick) {
-    suppressObsClick = false;
-    return;
-  }
   toggleObservations();
 });
 
 mobileLayout.addEventListener("change", () => {
   drag = null;
-  suppressObsClick = false;
   $workspace.classList.remove("no-transition");
   $workspace.style.removeProperty("--obs-width");
   setObsTogglePresentation();

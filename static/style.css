@@ -233,13 +233,13 @@ html, body {
 #workspace {
   display: grid;
   --obs-width: 340px;
-  grid-template-columns: 1fr 22px var(--obs-width);
+  grid-template-columns: 1fr 40px var(--obs-width);
   gap: 6px;
   padding: 8px;
   overflow: hidden;
   transition: grid-template-columns 0.3s ease;
 }
-#workspace.obs-hidden { grid-template-columns: 1fr 22px 0px; }
+#workspace.obs-hidden { grid-template-columns: 1fr 40px 0px; }
 #workspace.no-transition { transition: none; }
 
 #view {
@@ -263,21 +263,26 @@ html, body {
 }
 #tabs {
   display: flex;
+  align-items: stretch;
   justify-content: center;
   gap: 6px;
   flex: none;
-  padding: 8px 8px 0;
+  min-height: 52px;
+  padding: 0 8px;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
 }
 .tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: -1px;
   border: 1px solid transparent;
   border-bottom-color: var(--line);
   border-radius: 5px 5px 0 0;
   background: transparent;
   color: var(--muted);
-  padding: 7px 14px;
+  padding: 0 14px;
   font-size: 14px;
   cursor: pointer;
 }
@@ -329,29 +334,99 @@ html, body {
 #empty-hint.hidden { display: none; }
 
 #obs-toggle {
-  width: 22px;
-  height: 20%;
+  width: 40px;
+  height: clamp(120px, 20%, 180px);
   align-self: center;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 5px;
   background: var(--bg);
-  color: var(--muted);
+  color: var(--text);
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
   user-select: none;
+  overflow: hidden;
+  padding: 12px 0;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
-#workspace:not(.obs-hidden) #obs-toggle { cursor: ew-resize; }
+#workspace:not(.obs-hidden) #obs-toggle { cursor: pointer; }
+.obs-toggle-arrow {
+  order: 0;
+  flex: none;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+.obs-toggle-label {
+  order: 1;
+  max-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  opacity: 0;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  transform: scaleX(0.72);
+  transform-origin: left;
+  transition:
+    max-width 0.32s ease,
+    margin-left 0.32s ease,
+    opacity 0.18s ease,
+    transform 0.32s ease;
+}
+
+@media (min-width: 768px) {
+  #obs-toggle:hover,
+  #obs-toggle:focus-visible {
+    border-color: #aeb4be;
+    transform: translateX(-1px);
+  }
+  #obs-toggle:hover .obs-toggle-arrow,
+  #obs-toggle:focus-visible .obs-toggle-arrow {
+    color: var(--text);
+  }
+  #obs-toggle:hover .obs-toggle-label,
+  #obs-toggle:focus-visible .obs-toggle-label {
+    max-width: 16px;
+    margin-left: 7px;
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #obs-toggle,
+  .obs-toggle-arrow,
+  .obs-toggle-label {
+    transition: none;
+  }
+}
 
 #observations {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: 8px 8px 0 8px;
+}
+#obs-resize-handle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  cursor: ew-resize;
+  touch-action: none;
 }
 .obs-header {
   font-weight: 700;
@@ -619,11 +694,36 @@ html, body {
     width: 100%;
     height: 44px;
     align-self: stretch;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0 12px;
+    border-radius: var(--radius);
     cursor: pointer;
+    box-shadow: none;
+  }
+
+  .obs-toggle-label {
+    order: 1;
+    max-width: none;
+    margin: 0;
+    overflow: visible;
+    opacity: 1;
+    writing-mode: horizontal-tb;
+    font-size: 13px;
+    letter-spacing: 0;
+    transform: none;
+  }
+
+  .obs-toggle-arrow {
+    order: 0;
   }
 
   #workspace:not(.obs-hidden) #obs-toggle {
     cursor: pointer;
+  }
+
+  #obs-resize-handle {
+    display: none;
   }
 
   #workspace.obs-hidden #observations {

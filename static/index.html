@@ -89,8 +89,12 @@
         aria-expanded="false"
         aria-label="Show observations"
         title="Show observations"
-      >◀</button>
+      >
+        <span class="obs-toggle-label">Observations</span>
+        <span class="obs-toggle-arrow" aria-hidden="true">◀</span>
+      </button>
       <aside id="observations">
+        <div id="obs-resize-handle" aria-hidden="true"></div>
         <div class="obs-header">Observations</div>
         <div id="obs-list"></div>
       </aside>

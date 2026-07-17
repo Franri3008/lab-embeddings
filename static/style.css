@@ -109,6 +109,35 @@ html, body {
   overflow: hidden;
 }
 
+#app-title,
+.obs-header {
+  font-family: "Gloock", "Bodoni 72", Didot, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+#app-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+#app-title {
+  margin: 0;
+  padding: 2px 0 4px;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1;
+  text-align: center;
+}
+#app-version {
+  color: var(--muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
 #add-row { display: flex; gap: 6px; }
 
 #word-input {
@@ -250,12 +279,26 @@ html, body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--line);
+  background: var(--active);
+  color: #fff;
+  border: 1px solid var(--active);
+  font-weight: 600;
+  text-align: left;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+.btn-advanced:hover,
+.btn-advanced:focus-visible {
+  border-color: var(--muted);
+  opacity: 0.92;
 }
 .advanced-chevron {
-  color: var(--muted);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 2px;
+  color: #fff;
   font-size: 11px;
   transition: transform 0.3s ease;
 }
@@ -495,8 +538,8 @@ html, body {
   touch-action: none;
 }
 .obs-header {
-  font-weight: 700;
-  font-size: 18px;
+  font-size: 26px;
+  line-height: 1.1;
   text-align: center;
   padding: 0 0 8px;
 }
@@ -750,6 +793,11 @@ html, body {
     border-right: none;
     border-bottom: 1px solid var(--line);
     overflow: visible;
+  }
+
+  #app-title {
+    padding-top: max(2px, env(safe-area-inset-top));
+    font-size: 34px;
   }
 
   #word-input,

@@ -14,6 +14,9 @@
       }
     })();
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -21,6 +24,11 @@
 <body>
   <main id="app">
     <section id="controls">
+      <div id="app-brand">
+        <h1 id="app-title">Embedding Lab</h1>
+        <div id="app-version">v0.1.0</div>
+      </div>
+
       <div id="add-row">
         <input id="word-input" type="text" placeholder="word or phrase" autocomplete="off" />
         <button id="add-btn" class="btn btn-add">Add</button>

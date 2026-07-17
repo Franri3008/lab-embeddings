@@ -300,7 +300,52 @@ function updateCost(usd) {
   $costValue.textContent = text;
 }
 
-const GRAY_BLUE = [[0, "#9e9e9e"], [1, "#2563d9"]];
+const FOUR_D_SCALE = [
+  [0, "#d4a017"],
+  [0.5, "#d9dce1"],
+  [1, "#2563d9"],
+];
+
+function spatialAxis(title, range) {
+  return {
+    title: { text: title, font: { size: 11, color: "#6b7280" } },
+    range,
+    showbackground: true,
+    backgroundcolor: "rgba(244, 245, 247, 0.48)",
+    showgrid: true,
+    gridcolor: "#c4c9d1",
+    gridwidth: 2,
+    zeroline: true,
+    zerolinecolor: "#7f8792",
+    zerolinewidth: 3,
+    showline: true,
+    linecolor: "#9299a4",
+    linewidth: 3,
+    ticks: "",
+    showticklabels: false,
+    showspikes: false,
+  };
+}
+
+function planarAxis(title, range) {
+  return {
+    title: { text: title, standoff: 8, font: { size: 11, color: "#6b7280" } },
+    range,
+    showgrid: true,
+    gridcolor: "#cfd3da",
+    gridwidth: 1,
+    zeroline: true,
+    zerolinecolor: "#7f8792",
+    zerolinewidth: 2,
+    showline: true,
+    mirror: true,
+    linecolor: "#9299a4",
+    linewidth: 2,
+    ticks: "",
+    showticklabels: false,
+    constrain: "domain",
+  };
+}
 
 function plot(data) {
   const dims = data.dimensions;
@@ -314,6 +359,10 @@ function plot(data) {
     const c4 = data.points.map((p) => p.coords[3]);
     cmin = Math.min(...c4);
     cmax = Math.max(...c4);
+    if (cmin === cmax) {
+      cmin -= 0.5;
+      cmax += 0.5;
+    }
   }
   let scaleShown = false;
 
@@ -326,17 +375,43 @@ function plot(data) {
       const showscale = !scaleShown;
       scaleShown = true;
       marker = {
-        size: 5,
+        size: 7,
         symbol: group === "random" ? "diamond" : "circle",
         color: pts.map((p) => p.coords[3]),
-        colorscale: GRAY_BLUE,
+        colorscale: FOUR_D_SCALE,
         cmin,
         cmax,
+        opacity: 0.96,
+        line: { color: "#ffffff", width: 1 },
         showscale,
-        colorbar: showscale ? { thickness: 8, outlinewidth: 0, len: 0.8, title: "dim 4" } : undefined,
+        colorbar: showscale ? {
+          thickness: 8,
+          len: 0.48,
+          x: 1.02,
+          xpad: 6,
+          outlinewidth: 1,
+          outlinecolor: "#d9dce1",
+          bgcolor: "rgba(255, 255, 255, 0.92)",
+          tickfont: { size: 9, color: "#6b7280" },
+          title: { text: "D4", side: "top", font: { size: 10, color: "#1c1f24" } },
+        } : undefined,
       };
     } else {
-      marker = { size: use3d ? 5 : 11, color: COLORS[group] };
+      marker = use3d
+        ? {
+            size: 7,
+            symbol: group === "random" ? "diamond" : "circle",
+            color: COLORS[group],
+            opacity: 0.94,
+            line: { color: "#ffffff", width: 1 },
+          }
+        : {
+            size: 11,
+            symbol: group === "random" ? "diamond" : "circle",
+            color: COLORS[group],
+            opacity: 0.94,
+            line: { color: "#ffffff", width: 1 },
+          };
     }
 
     const trace = {
@@ -344,37 +419,70 @@ function plot(data) {
       type: use3d ? "scatter3d" : "scattergl",
       name: group,
       text: pts.map((p) => p.label),
+      hovertext: pts.map((p) => p.label),
       textposition: "top center",
-      hoverinfo: state.showLabels ? "skip" : "text",
+      hoverinfo: "text",
+      hovertemplate: "<b>%{hovertext}</b><extra></extra>",
       marker,
-      textfont: { color: COLORS[group] },
+      textfont: {
+        color: "#1c1f24",
+        size: 12,
+      },
       x: pts.map((p) => p.coords[0]),
       y: pts.map((p) => p.coords[1]),
     };
-    if (use3d) trace.z = pts.map((p) => p.coords[2]);
+    if (use3d) {
+      trace.z = pts.map((p) => p.coords[2]);
+      trace.projection = {
+        z: { show: true, opacity: 0.08, scale: 1 },
+      };
+    }
     traces.push(trace);
   }
 
-  const axis = { zeroline: false, showgrid: true, gridcolor: "#e6e8ec" };
+  const padded = (vals, ratio = 0.18) => {
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const margin = ((max - min) || 1) * ratio;
+    return [min - margin, max + margin];
+  };
   const layout = {
     paper_bgcolor: "#ffffff",
     plot_bgcolor: "#ffffff",
     showlegend: false,
-    margin: { l: 24, r: 24, t: 24, b: 24 },
+    margin: use3d
+      ? { l: 8, r: is4d ? 52 : 8, t: 8, b: 8 }
+      : { l: 38, r: 20, t: 20, b: 38 },
     font: { color: "#1c1f24" },
     dragmode: "pan",
+    uirevision: `semantic-space-${dims}`,
+    hoverlabel: {
+      bgcolor: "#ffffff",
+      bordercolor: "#c8ccd3",
+      font: { color: "#1c1f24", size: 12 },
+    },
   };
   if (use3d) {
-    layout.scene = { xaxis: axis, yaxis: axis, zaxis: axis, dragmode: "turntable" };
-  } else {
-    const padded = (vals) => {
-      const min = Math.min(...vals);
-      const max = Math.max(...vals);
-      const margin = ((max - min) || 1) * 0.18;
-      return [min - margin, max + margin];
+    layout.scene = {
+      xaxis: spatialAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.24)),
+      yaxis: spatialAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.24)),
+      zaxis: spatialAxis("D3", padded(data.points.map((p) => p.coords[2]), 0.24)),
+      bgcolor: "#ffffff",
+      aspectmode: "cube",
+      dragmode: "orbit",
+      camera: {
+        eye: { x: 1.48, y: 1.48, z: 1.18 },
+        center: { x: 0, y: 0, z: 0 },
+        up: { x: 0, y: 0, z: 1 },
+      },
     };
-    layout.xaxis = { ...axis, range: padded(data.points.map((p) => p.coords[0])) };
-    layout.yaxis = { ...axis, range: padded(data.points.map((p) => p.coords[1])) };
+  } else {
+    layout.xaxis = planarAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.22));
+    layout.yaxis = {
+      ...planarAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.22)),
+      scaleanchor: "x",
+      scaleratio: 1,
+    };
   }
 
   Plotly.react("graph", traces, layout, {

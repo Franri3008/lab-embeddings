@@ -9,13 +9,28 @@ const state = {
   activeView: "graph",
 };
 
-const COLORS = {
-  user: getCss("--user-pt"),
-  random: getCss("--random-pt"),
-};
-
 function getCss(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function getPlotTheme() {
+  return {
+    bg: getCss("--bg"),
+    text: getCss("--text"),
+    muted: getCss("--muted"),
+    line: getCss("--line"),
+    user: getCss("--user-pt"),
+    random: getCss("--random-pt"),
+    plane: getCss("--plot-plane"),
+    grid: getCss("--plot-grid"),
+    gridSoft: getCss("--plot-grid-soft"),
+    zero: getCss("--plot-zero"),
+    axisLine: getCss("--plot-line"),
+    outline: getCss("--plot-outline"),
+    heatLow: getCss("--heat-low"),
+    heatMid: getCss("--heat-mid"),
+    heatHigh: getCss("--heat-high"),
+  };
 }
 
 const $input = document.getElementById("word-input");
@@ -36,6 +51,7 @@ const $overlay = document.getElementById("overlay");
 const $overlayText = document.getElementById("overlay-text");
 const $loadFill = document.querySelector(".loadbar-fill");
 const $fundsModal = document.getElementById("funds-modal");
+const $themeToggle = document.getElementById("theme-toggle");
 document.getElementById("funds-close").onclick = () => $fundsModal.close();
 
 function maybeShowFundsModal(msg) {
@@ -300,26 +316,20 @@ function updateCost(usd) {
   $costValue.textContent = text;
 }
 
-const FOUR_D_SCALE = [
-  [0, "#d4a017"],
-  [0.5, "#d9dce1"],
-  [1, "#2563d9"],
-];
-
-function spatialAxis(title, range) {
+function spatialAxis(title, range, theme) {
   return {
-    title: { text: title, font: { size: 11, color: "#6b7280" } },
+    title: { text: title, font: { size: 11, color: theme.muted } },
     range,
     showbackground: true,
-    backgroundcolor: "rgba(244, 245, 247, 0.48)",
+    backgroundcolor: theme.plane,
     showgrid: true,
-    gridcolor: "#c4c9d1",
+    gridcolor: theme.grid,
     gridwidth: 2,
     zeroline: true,
-    zerolinecolor: "#7f8792",
+    zerolinecolor: theme.zero,
     zerolinewidth: 3,
     showline: true,
-    linecolor: "#9299a4",
+    linecolor: theme.axisLine,
     linewidth: 3,
     ticks: "",
     showticklabels: false,
@@ -327,19 +337,19 @@ function spatialAxis(title, range) {
   };
 }
 
-function planarAxis(title, range) {
+function planarAxis(title, range, theme) {
   return {
-    title: { text: title, standoff: 8, font: { size: 11, color: "#6b7280" } },
+    title: { text: title, standoff: 8, font: { size: 11, color: theme.muted } },
     range,
     showgrid: true,
-    gridcolor: "#cfd3da",
+    gridcolor: theme.gridSoft,
     gridwidth: 1,
     zeroline: true,
-    zerolinecolor: "#7f8792",
+    zerolinecolor: theme.zero,
     zerolinewidth: 2,
     showline: true,
     mirror: true,
-    linecolor: "#9299a4",
+    linecolor: theme.axisLine,
     linewidth: 2,
     ticks: "",
     showticklabels: false,
@@ -348,6 +358,8 @@ function planarAxis(title, range) {
 }
 
 function plot(data) {
+  const theme = getPlotTheme();
+  const fourDScale = [[0, theme.random], [0.5, theme.line], [1, theme.user]];
   const dims = data.dimensions;
   const is4d = dims === 4;
   const use3d = dims === 3 || dims === 4;
@@ -378,11 +390,11 @@ function plot(data) {
         size: 7,
         symbol: group === "random" ? "diamond" : "circle",
         color: pts.map((p) => p.coords[3]),
-        colorscale: FOUR_D_SCALE,
+        colorscale: fourDScale,
         cmin,
         cmax,
         opacity: 0.96,
-        line: { color: "#ffffff", width: 1 },
+        line: { color: theme.outline, width: 1 },
         showscale,
         colorbar: showscale ? {
           thickness: 8,
@@ -390,10 +402,10 @@ function plot(data) {
           x: 1.02,
           xpad: 6,
           outlinewidth: 1,
-          outlinecolor: "#d9dce1",
-          bgcolor: "rgba(255, 255, 255, 0.92)",
-          tickfont: { size: 9, color: "#6b7280" },
-          title: { text: "D4", side: "top", font: { size: 10, color: "#1c1f24" } },
+          outlinecolor: theme.line,
+          bgcolor: theme.bg,
+          tickfont: { size: 9, color: theme.muted },
+          title: { text: "D4", side: "top", font: { size: 10, color: theme.text } },
         } : undefined,
       };
     } else {
@@ -401,16 +413,16 @@ function plot(data) {
         ? {
             size: 7,
             symbol: group === "random" ? "diamond" : "circle",
-            color: COLORS[group],
+            color: theme[group],
             opacity: 0.94,
-            line: { color: "#ffffff", width: 1 },
+            line: { color: theme.outline, width: 1 },
           }
         : {
             size: 11,
             symbol: group === "random" ? "diamond" : "circle",
-            color: COLORS[group],
+            color: theme[group],
             opacity: 0.94,
-            line: { color: "#ffffff", width: 1 },
+            line: { color: theme.outline, width: 1 },
           };
     }
 
@@ -425,7 +437,7 @@ function plot(data) {
       hovertemplate: "<b>%{hovertext}</b><extra></extra>",
       marker,
       textfont: {
-        color: "#1c1f24",
+        color: theme.text,
         size: 12,
       },
       x: pts.map((p) => p.coords[0]),
@@ -447,27 +459,27 @@ function plot(data) {
     return [min - margin, max + margin];
   };
   const layout = {
-    paper_bgcolor: "#ffffff",
-    plot_bgcolor: "#ffffff",
+    paper_bgcolor: theme.bg,
+    plot_bgcolor: theme.bg,
     showlegend: false,
     margin: use3d
       ? { l: 8, r: is4d ? 52 : 8, t: 8, b: 8 }
       : { l: 38, r: 20, t: 20, b: 38 },
-    font: { color: "#1c1f24" },
+    font: { color: theme.text },
     dragmode: "pan",
     uirevision: `semantic-space-${dims}`,
     hoverlabel: {
-      bgcolor: "#ffffff",
-      bordercolor: "#c8ccd3",
-      font: { color: "#1c1f24", size: 12 },
+      bgcolor: theme.bg,
+      bordercolor: theme.line,
+      font: { color: theme.text, size: 12 },
     },
   };
   if (use3d) {
     layout.scene = {
-      xaxis: spatialAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.24)),
-      yaxis: spatialAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.24)),
-      zaxis: spatialAxis("D3", padded(data.points.map((p) => p.coords[2]), 0.24)),
-      bgcolor: "#ffffff",
+      xaxis: spatialAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.24), theme),
+      yaxis: spatialAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.24), theme),
+      zaxis: spatialAxis("D3", padded(data.points.map((p) => p.coords[2]), 0.24), theme),
+      bgcolor: theme.bg,
       aspectmode: "cube",
       dragmode: "orbit",
       camera: {
@@ -477,9 +489,9 @@ function plot(data) {
       },
     };
   } else {
-    layout.xaxis = planarAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.22));
+    layout.xaxis = planarAxis("D1", padded(data.points.map((p) => p.coords[0]), 0.22), theme);
     layout.yaxis = {
-      ...planarAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.22)),
+      ...planarAxis("D2", padded(data.points.map((p) => p.coords[1]), 0.22), theme),
       scaleanchor: "x",
       scaleratio: 1,
     };
@@ -493,6 +505,60 @@ function plot(data) {
 
 let pendingHeatmap = null;
 let lastResult = null;
+let themeTransitionTimer = null;
+
+function savedTheme() {
+  try {
+    return localStorage.getItem("embedding-lab-theme");
+  } catch (_) {
+    return null;
+  }
+}
+
+function updateThemeToggle() {
+  const isDark = document.documentElement.dataset.theme === "dark";
+  const action = isDark ? "Switch to light mode" : "Switch to dark mode";
+  $themeToggle.setAttribute("aria-checked", String(isDark));
+  $themeToggle.setAttribute("aria-label", action);
+  $themeToggle.title = action;
+}
+
+function applyTheme(theme, persist = false) {
+  if (document.documentElement.dataset.theme === theme) return;
+  clearTimeout(themeTransitionTimer);
+  document.documentElement.classList.add("theme-transition");
+  void document.documentElement.offsetWidth;
+  document.documentElement.dataset.theme = theme;
+  if (persist) {
+    try {
+      localStorage.setItem("embedding-lab-theme", theme);
+    } catch (_) {
+      /* Theme still applies when storage is unavailable. */
+    }
+  }
+  updateThemeToggle();
+  if (lastResult) plot(lastResult);
+  if (state.activeView === "heatmap" && pendingHeatmap) {
+    renderHeatmap(pendingHeatmap.labels, pendingHeatmap.matrix);
+  }
+  themeTransitionTimer = window.setTimeout(() => {
+    document.documentElement.classList.remove("theme-transition");
+  }, 360);
+}
+
+$themeToggle.addEventListener("click", (event) => {
+  const selected = event.target.closest("[data-theme]");
+  const current = document.documentElement.dataset.theme;
+  const next = selected ? selected.dataset.theme : (current === "dark" ? "light" : "dark");
+  applyTheme(next, true);
+});
+
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+systemTheme.addEventListener("change", (event) => {
+  if (!savedTheme()) applyTheme(event.matches ? "dark" : "light");
+});
+
+updateThemeToggle();
 
 function plotHeatmap(labels, matrix) {
   if (!Array.isArray(labels) || !Array.isArray(matrix) || labels.length === 0) {
@@ -506,23 +572,24 @@ function plotHeatmap(labels, matrix) {
 }
 
 function renderHeatmap(labels, matrix) {
+  const theme = getPlotTheme();
   const trace = {
     type: "heatmap",
     z: matrix,
     x: labels,
     y: labels,
     zmax: 1,
-    colorscale: [[0, "#f0f4fb"], [0.5, "#9cc0f0"], [1, "#3f78d6"]],
+    colorscale: [[0, theme.heatLow], [0.5, theme.heatMid], [1, theme.heatHigh]],
     texttemplate: "%{z:.2f}",
-    textfont: { size: 10, color: "#1c1f24" },
+    textfont: { size: 10, color: theme.text },
     hoverinfo: "skip",
     showscale: false,
   };
   const layout = {
-    paper_bgcolor: "#ffffff",
-    plot_bgcolor: "#ffffff",
+    paper_bgcolor: theme.bg,
+    plot_bgcolor: theme.bg,
     margin: { l: 70, r: 10, t: 70, b: 10 },
-    font: { color: "#1c1f24", size: 11 },
+    font: { color: theme.text, size: 11 },
     xaxis: { side: "top", tickangle: -45, automargin: true, constrain: "domain" },
     yaxis: {
       autorange: "reversed",
